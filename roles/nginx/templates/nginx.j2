@@ -1,0 +1,43 @@
+server {
+  listen 80;
+  listen [::]:80;
+  server_name {{ domain }};
+
+  location ~ /\.well-known/acme-challenge {
+    allow all;
+  }
+
+  location / {
+    return 301 https://mondomaine.fr$request_uri; 
+  }
+}
+
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+
+  server_name {{ domain }};
+  root /var/www/{{ domain }};
+
+  index index.php index.html index.nginx-debian.html;
+
+  error_log /var/log/nginx/mondomaine.fr.log notice;
+  access_log off;
+
+  location ~* \.(html|css|js|png|jpg|jpeg|gif|ico|svg|eot|woff|ttf)$ { expires max; }
+
+  location ~ /\. { deny all; }
+
+  location ~ \.php$ {
+    include snippets/fastcgi-php.conf;
+
+    fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
+  }
+
+  include /etc/nginx/snippets/ssl-{{ domain }}.conf;
+  include /etc/nginx/snippets/ssl-params.conf;
+  
+  include /etc/nginx/conf.d/{{ domain }}/*.conf;    
+}
+
+

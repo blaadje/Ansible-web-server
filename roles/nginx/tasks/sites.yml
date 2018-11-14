@@ -1,0 +1,13 @@
+- name: Creation du dossier
+  file: path=/home/{{ user }}/{{ domain }} state=directory owner={{ user }}
+
+- name: Lien vers www
+  file: src=/home/{{ user }}/{{ domain }} dest=/var/www/{{ domain }} state=link
+
+- name: Creation de la configuration nginx
+  template: src=templates/nginx_pre_conf.j2 dest=/etc/nginx/sites-available/{{ domain }} force=yes
+  notify: nginx reload
+
+- name: Activation du domain {{ domain }}
+  file: src=/etc/nginx/sites-available/{{ domain }} dest=/etc/nginx/sites-enabled/{{ domain }} state=link
+  notify: nginx reload

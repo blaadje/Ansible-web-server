@@ -1,0 +1,12 @@
+- name: Installation des serveurs web
+  hosts: web
+  remote_user: root
+  vars:
+    user: etudiant
+    email: acharlot91@gmail.com
+    domain: creative-drawer.ovh
+
+  roles: 
+    - utils
+    - user
+    - nginx

@@ -1,0 +1,20 @@
+- name: Install
+  apt: name=nginx state=latest
+
+- name: Start
+  service: name=nginx state=started enabled=true
+
+- name: Supprimer default.conf
+  file: path=/etc/nginx/sites-enabled/default state=absent
+  notify: nginx reload
+
+- name: Configuration des sites
+  include_tasks: sites.yml
+
+- name: Letsencrypt
+  include_tasks: certif.yml
+
+- name: PHP
+  include_tasks: php.yml
+
+

@@ -1,0 +1,7 @@
+- name: Installation de git
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - vim
+    - htop
+    - git
+    - fish

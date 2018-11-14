@@ -1,0 +1,37 @@
+- name: Install letsencrypt client (formerly certbot)
+  apt: name=letsencrypt
+  
+- name: Run letsencrypt
+  command: letsencrypt certonly --rsa-key-size 4096 --webroot --webroot-path /var/www/{{ domain }} -d {{ domain }} -n --agree-tos --email {{ email }}
+
+- stat: path=/etc/ssl/certs/dhparam.pem
+  register: stat_res
+
+- name: Generate strong Diffie-Hellman Group if it doesnt exists
+  command: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+  when: stat_res.stat.exists == False
+  
+- name: setup ssl-params.conf
+  template: src=ssl_params.j2 dest=/etc/nginx/snippets/ssl-params.conf
+
+- name: setup 
+  template: src=ssl_conf.j2 dest=/etc/nginx/snippets/ssl-{{ domain }}.conf
+
+- name: Copy file
+  template: src=templates/nginx.j2 dest=/etc/nginx/sites-available/{{ domain }}
+
+- name: enable site
+  file: src=/etc/nginx/sites-available/{{ domain }} dest=/etc/nginx/sites-enabled/{{ domain}} state=link
+  
+- name: Setup cron job which renews the certificate 
+  cron: 
+    name: "{{item.name}}"
+    job: "{{item.job}}"
+  with_items:
+    - name: Renew letsencrypt
+      job: 30 2 * * 1 /usr/bin/letsencrypt renew >> /var/log/le-renew.log
+    - name: Reload nginx after letsencrypt renewal
+      job: 35 2 * * 1 /bin/systemctl reload nginx
+
+- name: reload nginx
+  service: name=nginx state=reloaded
